@@ -1,25 +1,15 @@
-# FamilieKurv v0.3 - price connection fix
+# FamilieKurv v0.5 — request-saving update
 
-This is a **deployable website** (not a standalone HTML file). It needs a small serverless backend because a browser may block cross-origin Prej API requests.
+## Install
+Update only the `index.html` file in your existing GitHub repository and commit it. Vercel should redeploy automatically. Keep `api/prej.js` unchanged; your existing backend connection remains intact.
 
-## Beginner-friendly setup (Vercel + GitHub)
+## What changed
+- Product search responses cached in the browser for 24 hours (same device/browser only).
+- Basket comparisons use cached batch results and only hit the API on refresh or cache expiry.
+- Cached results are labeled with time; older data may be used if requests fail, with an explicit stale warning.
+- A manual Refresh prices button forces a new Prej request.
+- Shows API calls *initiated from this browser today*; this is NOT your actual Prej remaining allowance, and other users/devices count separately.
+- Clear saved search cache button.
 
-1. Create a new private GitHub repository named `familiekurv`.
-2. Upload **both** `index.html` and the `api` folder (including `api/prej.js`) from this zip into the repository root.
-3. Sign in at https://vercel.com/ with GitHub and choose **Add New > Project**.
-4. Import the `familiekurv` repository. Framework preset: **Other**. Leave root directory as `./` and deploy.
-5. Open your new HTTPS `*.vercel.app` link on your phone. Enter your personal Prej key and tap **Connect**.
-
-Do NOT open `index.html` directly from your computer: that bypasses the backend and cannot connect.
-
-## Security and limitations
-
-- The personal Prej key is entered in the app, sent to your own Vercel backend on each request via HTTPS, and forwarded to Prej. It is not stored server-side or in localStorage. It remains in browser tab memory until refreshed.
-- Use a **private** GitHub repository. Never paste your key in code or into GitHub.
-- Do not publicly share a deployed application while the backend remains unauthenticated; for family use, add access control and rate limiting before rollout.
-- This prototype is not yet cross-device synchronized and has not been authenticated against a real Prej key.
-- A Prej personal key is subject to the provider's current usage terms and quotas.
-
-
-## v0.4 search update
-Searches up to 100 grocery-only products from Prej, ranks whole-word product-name matches first, and hides irrelevant substring matches behind a broader-results button. This is client-side ranking of the first API page, not a guarantee that every matching product is retrieved. Existing Vercel backend and saved shopping lists are unchanged.
+## Limitations
+No cross-device shared cache: that requires persistent storage, e.g. Vercel KV/Redis and authentication. This version does not install a shared backend cache. Do not commit any API key to GitHub. The Prej account daily quota cannot be inferred from local counts. API key is kept in memory per browser tab. The app is suitable for a personal prototype, not public production use.
