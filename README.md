@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/33491171/README.md)
 # FamilieKurv v0.3 - price connection fix
 
 This is a **deployable website** (not a standalone HTML file). It needs a small serverless backend because a browser may block cross-origin Prej API requests.
@@ -20,3 +19,7 @@ Do NOT open `index.html` directly from your computer: that bypasses the backend 
 - Do not publicly share a deployed application while the backend remains unauthenticated; for family use, add access control and rate limiting before rollout.
 - This prototype is not yet cross-device synchronized and has not been authenticated against a real Prej key.
 - A Prej personal key is subject to the provider's current usage terms and quotas.
+
+
+## v0.4 search update
+Searches up to 100 grocery-only products from Prej, ranks whole-word product-name matches first, and hides irrelevant substring matches behind a broader-results button. This is client-side ranking of the first API page, not a guarantee that every matching product is retrieved. Existing Vercel backend and saved shopping lists are unchanged.
