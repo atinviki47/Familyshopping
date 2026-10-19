@@ -1,0 +1,11 @@
+// Public geospatial store lookup. Does not use Prej quota.
+const cache=new Map();
+function haversine(a,b,c,d){const R=6371,rad=Math.PI/180,da=(c-a)*rad,db=(d-b)*rad;const h=Math.sin(da/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(db/2)**2;return R*2*Math.asin(Math.min(1,Math.sqrt(h)));}
+export default async function handler(req,res){
+ res.setHeader('Cache-Control','public, s-maxage=1800, stale-while-revalidate=3600');
+ const lat=Number(req.query.lat),lon=Number(req.query.lon);
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<54||lat>58||lon<7||lon>16)return res.status(400).json({error:'Select a location within Denmark.'});
+ const key=lat.toFixed(2)+':'+lon.toFixed(2);if(cache.has(key)&&Date.now()-cache.get(key).at<1800000)return res.status(200).json(cache.get(key).data);
+ const q=`[out:json][timeout:20];(nwr[shop=supermarket](around:20000,${lat},${lon}););out center tags;`;
+ try{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),26000);let resp;try{resp=await fetch('https://overpass.kumi.systems/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q),signal:controller.signal});}finally{clearTimeout(timer);}if(!resp.ok)throw Error('Map data provider temporarily unavailable ('+resp.status+')');const data=await resp.json();const seen=new Set(),stores=[];for(const el of (data.elements||[])){const tags=el.tags||{},a=el.lat??el.center?.lat,b=el.lon??el.center?.lon;if(!Number.isFinite(a)||!Number.isFinite(b))continue;const name=String(tags.name||tags.brand||tags.operator||'Supermarket');const address=[tags['addr:street'],tags['addr:housenumber']].filter(Boolean).join(' ');const chain=String(tags.brand||tags.name||tags.operator||'');const dist=haversine(lat,lon,a,b);const dedupe=el.type+':'+el.id;if(seen.has(dedupe))continue;seen.add(dedupe);stores.push({name,chain,address,lat:a,lon:b,distance:Math.round(dist*10)/10});}stores.sort((a,b)=>a.distance-b.distance);const result={stores:stores.slice(0,180),source:'OpenStreetMap / Overpass',distance_type:'straight_line_km'};cache.set(key,{at:Date.now(),data:result});return res.status(200).json(result);}catch(e){return res.status(503).json({error:'Store-location service unavailable. Try again soon.'});}
+}
